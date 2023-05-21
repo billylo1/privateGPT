@@ -44,19 +44,23 @@ class MyElmLoader(UnstructuredEmailLoader):
 
     def load(self) -> List[Document]:
         """Wrapper adding fallback for elm without html"""
+
         try:
             try:
+                print(f"Loading {self.file_path}")
                 doc = UnstructuredEmailLoader.load(self)
             except ValueError as e:
-                if 'text/html content not found in email' in str(e):
+                if 'text/plain content not found in email' in str(e):
                     # Try plain text
-                    self.unstructured_kwargs["content_source"]="text/plain"
+                    self.unstructured_kwargs["content_source"]="text/html"
                     doc = UnstructuredEmailLoader.load(self)
                 else:
                     raise
         except Exception as e:
             # Add file_path to exception message
-            raise type(e)(f"{self.file_path}: {e}") from e
+            doc = TextLoader("source_documents/a.txt").load()
+            # print(f"Error loading {self.file_path}: {e}")
+            # raise type(e)(f"{self.file_path}: {e}") from e
 
         return doc
 
@@ -68,7 +72,7 @@ LOADER_MAPPING = {
     ".doc": (UnstructuredWordDocumentLoader, {}),
     ".docx": (UnstructuredWordDocumentLoader, {}),
     ".enex": (EverNoteLoader, {}),
-    ".eml": (MyElmLoader, {}),
+    ".eml": (MyElmLoader, {"content_source": "text/plain", "encoding": "latin-1"}),
     ".epub": (UnstructuredEPubLoader, {}),
     ".html": (UnstructuredHTMLLoader, {}),
     ".md": (UnstructuredMarkdownLoader, {}),
